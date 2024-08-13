@@ -1,62 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:fitsSystemWindows="true"
+    tools:context=".ContactDetailActivity">
 
-    <TextView
-        android:id="@+id/contactDetailName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:text="@string/name"
-        android:textColor="@android:color/black"
-        android:layout_marginBottom="8dp"/>
-
-    <TextView
-        android:id="@+id/contactDetailPhone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:text="@string/_987767767"
-        android:textColor="@android:color/black"
-        android:layout_marginBottom="16dp"/>
-
-    <!-- Add additional details such as email here if needed -->
-
-
-    <!-- Action Buttons -->
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="16dp">
+        android:fitsSystemWindows="true">
 
-        <Button
-            android:id="@+id/btnEditContact"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/edit"
-            android:layout_marginEnd="8dp"/>
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:elevation="0dp"
+            app:menu="@menu/detail_menu"
+            app:navigationIcon="@drawable/ic_baseline_arrow_back_24">
 
-        <Button
-            android:id="@+id/btnDeleteContact"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/delete"
-            android:layout_marginEnd="8dp"/>
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
-        <Button
-            android:id="@+id/btnUpdateContact"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/update"/>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/contact_item_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="48dp"
+        app:layoutManager="LinearLayoutManager"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    </LinearLayout>
-
-</LinearLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/edit_contact_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/add"
+        app:srcCompat="@drawable/ic_baseline_edit_24" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

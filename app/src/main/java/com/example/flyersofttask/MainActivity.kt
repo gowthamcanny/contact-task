@@ -1,120 +1,138 @@
 package com.example.flyersofttask
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.pm.PackageInstaller
+import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract
-import android.widget.Button
-import android.widget.Toast
+import android.view.View
+import android.view.ViewGroup.MarginLayoutParams
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlinx.coroutines.launch
+import androidx.appcompat.widget.SearchView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import com.example.flyersofttask.databinding.ActivityMainBinding
+import me.zhanghai.android.fastscroll.FastScrollerBuilder
+import puelloc.addressbook.data.AddressDatabase
+
+const val CONTACT_FRAGMENT_TAG = "contact dialog"
+var notUseFullScreenDialog = false
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var contactAdapter: ContactAdapter
-    private lateinit var contactRepository: ContactRepository
+    private var binding: ActivityMainBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding?.root)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        contactRepository = ContactRepository(AppDatabase.getDatabase(this).contactDao())
+        val originFABBottomMargin =
+            (binding?.newContactButton?.layoutParams as MarginLayoutParams).bottomMargin
 
-        contactAdapter = ContactAdapter { contact ->
-            val intent = Intent(this, ContactDetailActivity::class.java)
-            intent.putExtra("CONTACT_ID", contact.id)
-            startActivity(intent)
-        }
-
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = contactAdapter
-
-        checkPermissionAndLoadContacts()
-        setupButtons()
-    }
-
-    private fun checkPermissionAndLoadContacts() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_CONTACTS), 1)
-        } else {
-            loadContacts()
-        }
-    }
-
-    private fun loadContacts() {
-        lifecycleScope.launch {
-            val contacts = getContacts()
-            contactRepository.insertContacts(contacts)
-            contactAdapter.submitList(contactRepository.getAllContacts())
-        }
-    }
-
-    @SuppressLint("Range")
-    fun getContacts(): List<ContactEntity> {
-        val contactList = mutableListOf<ContactEntity>()
-        val contentResolver = contentResolver
-
-        val cursor = contentResolver?.query(
-            ContactsContract.Contacts.CONTENT_URI,
-            null,
-            null,
-            null,
-            null
-        )
-
-        cursor?.use {
-            if (it.moveToFirst()) {
-                do {
-                    // Process each contact
-                    val id = it.getString(it.getColumnIndex(ContactsContract.Contacts._ID))
-                    val name = it.getString(it.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME))
-
-                    // Fetch phone numbers
-                    val phoneCursor = contentResolver?.query(
-                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                        null,
-                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                        arrayOf(id),
-                        null
-                    )
-
-                    phoneCursor?.use { pCursor ->
-                        if (pCursor.moveToFirst()) {
-                            val phoneNumber = pCursor.getString(
-                                pCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-                            )
-
-                            contactList.add(ContactEntity(id, name, phoneNumber, null))
-                        }
-                    }
-                } while (it.moveToNext())
+        binding?.root?.let {
+            ViewCompat.setOnApplyWindowInsetsListener(it) { v: View, insets: WindowInsetsCompat ->
+                val imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+                val layout = v.layoutParams as MarginLayoutParams
+                layout.bottomMargin = imeHeight
+                v.layoutParams = layout
+                insets
             }
         }
-        return contactList
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding?.newContactButton!!) { v: View, insets: WindowInsetsCompat ->
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            val barHeight = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+            if (!imeVisible) {
+                val layout = v.layoutParams as MarginLayoutParams
+                layout.bottomMargin = barHeight + originFABBottomMargin
+                v.layoutParams = layout
+            } else {
+                val layout = v.layoutParams as MarginLayoutParams
+                layout.bottomMargin = originFABBottomMargin
+                v.layoutParams = layout
+            }
+            WindowInsetsCompat.CONSUMED
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+                .setWhitelistedRestrictedPermissions(setOf(Manifest.permission.READ_CALL_LOG))
+        }
+
+        val addressDB = AddressDatabase.getDatabase(applicationContext)
+        val addressDao = addressDB.addressDao()
+        val viewModel = AddressListViewModel(addressDao)
+
+        val adapter = AddressesAdapter()
+        binding?.addressesList?.adapter = adapter
+
+        viewModel.filteredAddresses.observe(this) { items ->
+            adapter.submitList(items)
+        }
+
+        val searchItem = binding?.topAppBar?.menu?.findItem(R.id.app_bar_search)
+        val search = searchItem?.actionView as SearchView
+
+        search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (query != null) {
+                    viewModel.filterString.value = query
+                }
+                search.clearFocus()
+                return true
+            }
+
+            override fun onQueryTextChange(query: String?): Boolean {
+                if (query != null) {
+                    viewModel.filterString.value = query
+                }
+                return true
+            }
+        })
+
+        binding?.newContactButton?.setOnClickListener {
+            search.clearFocus()
+            val dialog = ContactDialog(viewModel)
+            if (notUseFullScreenDialog) {
+                dialog.show(supportFragmentManager, CONTACT_FRAGMENT_TAG)
+            } else {
+                val transaction = supportFragmentManager.beginTransaction()
+                transaction
+                    .add(android.R.id.content, dialog)
+                    .addToBackStack(CONTACT_FRAGMENT_TAG)
+                    .commit()
+            }
+        }
+
+        binding?.addressesList?.let { FastScrollerBuilder(it).setPadding(0, 16, 0, 64).useMd2Style().build() }
+
+        binding?.topAppBar?.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.action_debug -> {
+                    val intent = Intent(applicationContext, InfoActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                else -> false
+            }
+        }
+
+        Utils.requestPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { }
     }
 
-    private fun setupButtons() {
-        findViewById<FloatingActionButton>(R.id.btnAddContact).setOnClickListener {
-            // Add contact logic
-            addContact()
+    override fun onBackPressed() {
+        val searchItem = binding?.topAppBar?.menu?.findItem(R.id.app_bar_search)
+        if (searchItem?.isActionViewExpanded == true && supportFragmentManager.backStackEntryCount == 0) {
+            searchItem.collapseActionView()
+        } else {
+            super.onBackPressed()
         }
     }
-
-    private fun addContact() {
-        val newContact = ContactEntity(name = "New Contact", phoneNumber = "1234567890", id = "", email = "")
-        lifecycleScope.launch {
-            contactRepository.insert(newContact)
-            Toast.makeText(this@MainActivity, "Contact Added", Toast.LENGTH_SHORT).show()
-        }
-    }
-
 }
+

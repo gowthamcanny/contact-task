@@ -1,144 +1,75 @@
 package com.example.flyersofttask
 
-import android.content.ContentUris
-import android.content.ContentValues
-import android.database.ContentObserver
+import android.Manifest
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.provider.ContactsContract
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import androidx.core.view.WindowCompat
+import com.example.flyersofttask.databinding.ActivityContactDetailBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import puelloc.addressbook.data.AddressDatabase
 
 class ContactDetailActivity : AppCompatActivity() {
-
-    private lateinit var contactRepository: ContactRepository
-    private lateinit var contactDetailName: TextView
-    private lateinit var contactDetailPhone: TextView
-
-    private lateinit var selectedContact: ContactEntity
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_contact_detail)
+        val binding = ActivityContactDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        contactRepository = ContactRepository(AppDatabase.getDatabase(this).contactDao())
-
-        contactDetailName = findViewById(R.id.contactDetailName)
-        contactDetailPhone = findViewById(R.id.contactDetailPhone)
-
-        val contactId = intent.getStringExtra("CONTACT_ID")
-        if (contactId != null) {
-            loadContactDetails(contactId)
+        val addressId = intent.getIntExtra(ADDRESS_ID_MESSAGE, -1)
+        if (addressId == -1) {
+            Toast.makeText(applicationContext, "Error Intent Load", Toast.LENGTH_SHORT).show()
+            finish()
         }
 
-        // Register content observer to monitor changes
-        contentResolver.registerContentObserver(
-            ContactsContract.Contacts.CONTENT_URI,
-            true,
-            contactObserver
-        )
+        val adapter = ContactItemsAdapter()
+        binding.contactItemList.adapter = adapter
 
-        // Setup buttons' onClickListeners
-        setupButtons()
-    }
-
-    private fun loadContactDetails(contactId: String) {
-        lifecycleScope.launch {
-            val contact = contactRepository.getContactById(contactId)
-            if (contact != null) {
-                contactDetailName.text = contact.name
-                contactDetailPhone.text = contact.phoneNumber
-            }
-        }
-    }
-
-    private val contactObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
-        override fun onChange(selfChange: Boolean) {
-            super.onChange(selfChange)
-            // Handle additions, deletions, updates here
-            syncContactsWithDatabase()
-        }
-    }
-
-    private fun syncContactsWithDatabase() {
-        // Logic to sync contacts with the database
-    }
-
-    private fun setupButtons() {
-        findViewById<Button>(R.id.btnEditContact).setOnClickListener {
-            // Edit contact logic
-            editContact()
-        }
-        findViewById<Button>(R.id.btnDeleteContact).setOnClickListener {
-            // Delete contact logic
-            deleteContact()
-        }
-        findViewById<Button>(R.id.btnUpdateContact).setOnClickListener {
-            // Update contact logic
-            updateContactInPhoneBook()
-        }
-    }
-
-    private fun editContact() {
-        selectedContact.let {
-            val updatedContact = it.copy(name = "Edited Name")
-            lifecycleScope.launch {
-                contactRepository.update(updatedContact)
-                Toast.makeText(this@ContactDetailActivity, "Contact Edited", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun deleteContact() {
-        selectedContact.let {
-            lifecycleScope.launch {
-                contactRepository.delete(it)
-                Toast.makeText(this@ContactDetailActivity, "Contact Deleted", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun updateContactInPhoneBook() {
-        selectedContact.let { contact ->
-            lifecycleScope.launch {
-                // Update contact in your local database
-                val updatedContact = contact.copy(name = "Updated Name")
-                contactRepository.update(updatedContact)
-
-                // Update the contact in the phone book
-                val contactUri = ContentUris.withAppendedId(
-                    ContactsContract.RawContacts.CONTENT_URI,
-                    contact.id.toLong()
-                )
-
-                val contentValues = ContentValues().apply {
-                    put(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, "Updated Name")
+        val addressVM = AddressListViewModel(AddressDatabase.getDatabase().addressDao())
+        addressVM.retrieveItemById(addressId).observe(this) { address ->
+            if (address != null) {
+                binding.topAppBar.title = address.name
+                adapter.submitList(address.getContactItems(applicationContext))
+                binding.topAppBar.setOnMenuItemClickListener {
+                    when (it.itemId) {
+                        R.id.action_delete -> {
+                            MaterialAlertDialogBuilder(this)
+                                .setTitle(R.string.delete_contact)
+                                .setMessage(getString(R.string.delete_contact_msg, address.name))
+                                .setNeutralButton(R.string.cancel) { _, _ ->
+                                    // Do Nothing
+                                }.setPositiveButton(R.string.ok) { _, _ ->
+                                    addressVM.delete(address)
+                                    finish()
+                                }.create().show()
+                            true
+                        }
+                        else -> false
+                    }
                 }
-
-                contentResolver.update(
-                    ContactsContract.Data.CONTENT_URI,
-                    contentValues,
-                    "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
-                    arrayOf(contact.id)
-                )
-
-                Toast.makeText(this@ContactDetailActivity, "Contact Updated", Toast.LENGTH_SHORT).show()
+                binding.editContactButton.setOnClickListener {
+                    val dialog = ContactDialog(addressVM, true, address)
+                    if (notUseFullScreenDialog) {
+                        dialog.show(supportFragmentManager, CONTACT_FRAGMENT_TAG)
+                    } else {
+                        val transaction = supportFragmentManager.beginTransaction()
+                        transaction
+                            .add(android.R.id.content, dialog)
+                            .addToBackStack("contact dialog")
+                            .commit()
+                    }
+                }
             }
         }
-    }
 
+        binding.topAppBar.setNavigationOnClickListener {
+            finish()
+        }
 
-    private fun onContactSelected(contact: ContactEntity) {
-        selectedContact = contact
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        contentResolver.unregisterContentObserver(contactObserver)
+        Utils.needPermission(
+            this,
+            Manifest.permission.READ_CALL_LOG,
+            infoResId = R.string.calllog_permission_info
+        )
     }
 }
