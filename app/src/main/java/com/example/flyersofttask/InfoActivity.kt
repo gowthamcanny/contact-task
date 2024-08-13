@@ -3,8 +3,8 @@ package com.example.flyersofttask
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import com.example.flyersofttask.data.AddressDatabase
 import com.example.flyersofttask.databinding.ActivityInfoBinding
-import puelloc.addressbook.data.AddressDatabase
 
 class InfoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

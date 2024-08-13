@@ -7,12 +7,12 @@ import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.DialogFragment
+import com.example.flyersofttask.data.Address
+import com.example.flyersofttask.data.CustomItem
 import com.example.flyersofttask.databinding.ContactDialogBinding
 import com.example.flyersofttask.databinding.ContactFullscreenBinding
 import com.example.flyersofttask.databinding.CustomContactItemInputBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import puelloc.addressbook.data.Address
-import puelloc.addressbook.data.CustomItem
 
 class ContactDialog(
     private val addressVM: AddressListViewModel,

@@ -13,9 +13,9 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.flyersofttask.data.AddressDatabase
 import com.example.flyersofttask.databinding.ActivityMainBinding
 import me.zhanghai.android.fastscroll.FastScrollerBuilder
-import puelloc.addressbook.data.AddressDatabase
 
 const val CONTACT_FRAGMENT_TAG = "contact dialog"
 var notUseFullScreenDialog = false

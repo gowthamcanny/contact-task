@@ -1,4 +1,4 @@
-package puelloc.addressbook.data
+package com.example.flyersofttask.data
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

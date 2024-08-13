@@ -12,8 +12,8 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.flyersofttask.data.Address
 import com.example.flyersofttask.databinding.ContactItemBinding
-import puelloc.addressbook.data.Address
 import java.text.SimpleDateFormat
 import java.util.*
 

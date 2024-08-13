@@ -1,11 +1,11 @@
 package com.example.flyersofttask
 
 import androidx.lifecycle.*
-import puelloc.addressbook.data.AddressDao
+import com.example.flyersofttask.data.Address
+import com.example.flyersofttask.data.AddressDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import puelloc.addressbook.data.Address
 
 class AddressListViewModel(private val addressDao: AddressDao) : ViewModel() {
     val allItems: LiveData<List<Address>> = addressDao.getAddresses().asLiveData()

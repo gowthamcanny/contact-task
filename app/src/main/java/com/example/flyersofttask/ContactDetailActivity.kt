@@ -5,9 +5,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import com.example.flyersofttask.data.AddressDatabase
 import com.example.flyersofttask.databinding.ActivityContactDetailBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import puelloc.addressbook.data.AddressDatabase
 
 class ContactDetailActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

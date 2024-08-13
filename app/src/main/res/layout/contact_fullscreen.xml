@@ -34,5 +34,7 @@
             layout="@layout/contact_dialog"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
+
     </androidx.core.widget.NestedScrollView>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

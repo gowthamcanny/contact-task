@@ -6,9 +6,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.flyersofttask.data.Address
 import com.example.flyersofttask.databinding.AddressItemBinding
 import me.zhanghai.android.fastscroll.PopupTextProvider
-import puelloc.addressbook.data.Address
 
 const val ADDRESS_ID_MESSAGE = "puelloc.addressbook@ADDRESS_ID_MESSAGE"
 

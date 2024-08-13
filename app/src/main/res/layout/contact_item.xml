@@ -38,4 +38,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/item_icon"
         app:layout_constraintTop_toBottomOf="@id/item_value" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
