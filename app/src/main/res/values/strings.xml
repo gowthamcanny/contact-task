@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">FlyerSoft Task</string>
+    <string name="name">Name</string>
+    <string name="_987767767">987767767</string>
+    <string name="gowtham">Gowtham</string>
+    <string name="_9878987999">9878987999</string>
+    <string name="contact_list">Contact List</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="update">Update</string>
+    <string name="add_contact">Add Contact</string>
+    <string name="empty">Empty</string>
+</resources>
